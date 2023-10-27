@@ -112,6 +112,7 @@ set(SOURCES
     types/qwxdgforeignv1.cpp
     types/qwxdgforeignv2.cpp
     types/qwvirtualkeyboardv1.cpp
+    types/qwvirtualkeyboardmanagerv1.cpp
     types/qwvirtualpointerv1.cpp
     types/qwgammacontorlv1.cpp
     types/qwfullscreenshellv1.cpp
@@ -211,6 +212,7 @@ set(HEADERS
 
 set(PRIVATE_HEADERS
     types/qwinputdevice_p.h
+    types/qwkeyboard_p.h
 )
 
 if ((${WLROOTS_VERSION_MAJOR} EQUAL 0) AND (${WLROOTS_VERSION_MINOR} GREATER 16))

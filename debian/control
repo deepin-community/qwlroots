@@ -26,7 +26,7 @@ Multi-Arch: same
 Depends:
   ${misc:Depends},
   libqwlroots1 (= ${binary:Version}),
-  libwlroots-dev
+  libwlroots12-dev
 Description: Qt and QML bindings for wlroots - development headers
   qwlroots is a binding of wlroots, which provides a Qt style development interface.
  It aims to simplify wlroots API calling methods with Qt, and serve the needs of
