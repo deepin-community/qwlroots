@@ -50,6 +50,7 @@ set(SOURCES
     types/qwsubcompositor.cpp
     types/qwdatadevice.cpp
     types/qwdatasource.cpp
+    types/qwdrag.cpp
     types/qwdatadevicev1.cpp
     types/qwdatacontrolmanagerv1.cpp
     types/qwdamagering.cpp
@@ -250,6 +251,10 @@ if ((${WLROOTS_VERSION_MAJOR} EQUAL 0) AND (${WLROOTS_VERSION_MINOR} GREATER 16)
         list(APPEND HEADERS
             types/qwxwaylandshellv1.h
         )
+    endif()
+    if (${WLROOTS_VERSION_MINOR} GREATER_EQUAL 18)
+        list(REMOVE_ITEM HEADERS types/qwinputinhibitmanager.h)
+        list(REMOVE_ITEM SOURCES types/qwinputinhibitmanager.cpp)
     endif()
 else()
     list(APPEND SOURCES
