@@ -60,8 +60,8 @@ public:
         return new QWOutput(i->handle(), true);
     }
 
-    void enable(bool enable);
 #if WLR_VERSION_MAJOR == 0 && WLR_VERSION_MINOR < 18
+    void enable(bool enable);
     void createGlobal();
 #else
     void createGlobal(QWDisplay *display);
@@ -70,6 +70,7 @@ public:
     bool initRender(QWAllocator *allocator, QWRenderer *renderer);
     wlr_output_mode *preferredMode() const;
 
+#if WLR_VERSION_MINOR < 18
     void setMode(wlr_output_mode *mode);
     void setCustomMode(const QSize &size, int32_t refresh);
     void setTransform(wl_output_transform_t wl_output_transform);
@@ -77,6 +78,8 @@ public:
     void setRenderFormat(uint32_t format);
     void setScale(float scale);
     void setSubpixel(wl_output_subpixel_t wl_output_subpixel);
+    void setDamage(pixman_region32 *damage);
+#endif
     void setName(const QByteArray &name);
     void setDescription(const QByteArray &desc);
     void scheduleDone();
@@ -84,17 +87,21 @@ public:
     QSize transformedResolution() const;
     QSize effectiveResolution() const;
 
+#if WLR_VERSION_MINOR < 18
     bool attachRender(int *bufferAge);
-    void lockAttachRender(bool lock);
     void attachBuffer(QWBuffer *buffer);
+#endif
+    void lockAttachRender(bool lock);
 
     uint32_t preferredReadFormat() const;
-    void setDamage(pixman_region32 *damage);
+#if WLR_VERSION_MINOR < 18
     bool test();
     bool commit();
     void rollback();
+#endif
     bool testState(wlr_output_state *state);
     bool commitState(wlr_output_state *state);
+    static void finishState(wlr_output_state *state);
     void scheduleFrame();
 
     size_t getGammaSize() const;
@@ -105,11 +112,8 @@ public:
 #endif
     const wlr_drm_format_set *getPrimaryFormats(uint32_t bufferCaps);
 
-#if WLR_VERSION_MINOR > 16
     void addSoftwareCursorsToRenderPass(wlr_render_pass *render_pass, const pixman_region32_t *damage);
     bool configurePrimarySwapchain(const wlr_output_state *state, wlr_swapchain **swapchain);
-#endif
-
 
 Q_SIGNALS:
     void beforeDestroy(QWOutput *self);
@@ -121,9 +125,7 @@ Q_SIGNALS:
     void present(wlr_output_event_present *event);
     void bind(wlr_output_event_bind *event);
     void descriptionChanged();
-#if WLR_VERSION_MINOR > 16
     void requestState(wlr_output_event_request_state *state);
-#endif
 
 private:
     QWOutput(wlr_output *handle, bool isOwner);
@@ -141,9 +143,6 @@ public:
     static QWOutputCursor *from(wlr_output_cursor *handle);
     static QWOutputCursor *create(QWOutput *output);
 
-#if WLR_VERSION_MINOR <= 16
-    bool setImage(const QImage &image, const QPoint &hotspot);
-#endif
     bool setBuffer(QWBuffer *buffer, const QPoint &hotspot);
     bool move(const QPointF &pos);
 };
