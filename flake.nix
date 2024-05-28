@@ -5,14 +5,13 @@
     flake-utils.url = "github:numtide/flake-utils";
     nix-filter.url = "github:numtide/nix-filter";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-
-    wlroots-17 = {
-      url = "gitlab:wlroots/wlroots?host=gitlab.freedesktop.org&ref=0.17.0";
+    wlroots-master = {
+      url = "gitlab:wlroots/wlroots?host=gitlab.freedesktop.org&ref=master";
       flake = false;
     };
   };
 
-  outputs = { self, flake-utils, nix-filter, nixpkgs, wlroots-17 }@input:
+  outputs = { self, flake-utils, nix-filter, nixpkgs, wlroots-master }@input:
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" "riscv64-linux" ]
       (system:
         let
@@ -21,7 +20,7 @@
         rec {
           packages = import ./default.nix {
             inherit pkgs nix-filter;
-            wlroots_0_17_src = wlroots-17;
+            wlroots_master_src = wlroots-master;
           };
 
           devShells.default = pkgs.mkShell { 

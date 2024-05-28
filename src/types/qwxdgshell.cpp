@@ -29,6 +29,10 @@ public:
         map.insert(handle, qq);
         sc.connect(&handle->events.destroy, this, &QWXdgShellPrivate::on_destroy);
         sc.connect(&handle->events.new_surface, this, &QWXdgShellPrivate::on_new_surface);
+#if WLR_VERSION_MINOR >= 18
+        sc.connect(&handle->events.new_toplevel, this, &QWXdgShellPrivate::on_new_toplevel);
+        sc.connect(&handle->events.new_popup, this, &QWXdgShellPrivate::on_new_popup);
+#endif
     }
     ~QWXdgShellPrivate() {
         if (!m_handle)
@@ -48,6 +52,10 @@ public:
 
     void on_destroy(void *);
     void on_new_surface(void *data);
+#if WLR_VERSION_MINOR >= 18
+    void on_new_toplevel(void *data);
+    void on_new_popup(void *data);
+#endif
 
     static QHash<void*, QWXdgShell*> map;
     QW_DECLARE_PUBLIC(QWXdgShell)
@@ -66,6 +74,18 @@ void QWXdgShellPrivate::on_new_surface(void *data)
 {
     Q_EMIT q_func()->newSurface(reinterpret_cast<wlr_xdg_surface*>(data));
 }
+
+#if WLR_VERSION_MINOR >= 18
+void QWXdgShellPrivate::on_new_toplevel(void *data)
+{
+    Q_EMIT q_func()->newToplevel(reinterpret_cast<wlr_xdg_toplevel*>(data));
+}
+
+void QWXdgShellPrivate::on_new_popup(void *data)
+{
+    Q_EMIT q_func()->newPopup(reinterpret_cast<wlr_xdg_popup*>(data));
+}
+#endif
 
 QWXdgShell::QWXdgShell(wlr_xdg_shell *handle, bool isOwner)
     : QObject(nullptr)
@@ -102,15 +122,17 @@ public:
     {
         Q_ASSERT(!map.contains(handle));
         map.insert(handle, qq);
+#if WLR_VERSION_MINOR < 18
+        // >0.18 role object's destory first then base's, connect to those to keep same behavior
         sc.connect(&handle->events.destroy, this, &QWXdgSurfacePrivate::on_destroy);
+#endif
         sc.connect(&handle->events.ping_timeout, this, &QWXdgSurfacePrivate::on_ping_timeout);
         sc.connect(&handle->events.new_popup, this, &QWXdgSurfacePrivate::on_new_popup);
-#if WLR_VERSION_MINOR <= 16
-        sc.connect(&handle->events.map, this, &QWXdgSurfacePrivate::on_map);
-        sc.connect(&handle->events.unmap, this, &QWXdgSurfacePrivate::on_unmap);
-#endif
         sc.connect(&handle->events.configure, this, &QWXdgSurfacePrivate::on_configure);
         sc.connect(&handle->events.ack_configure, this, &QWXdgSurfacePrivate::on_ack_configure);
+#if WLR_VERSION_MINOR >= 18
+        sc.connect(&handle->surface->events.commit, q_func(), &QWXdgSurface::commit);
+#endif
     }
     ~QWXdgSurfacePrivate() {
         if (!m_handle)
@@ -131,10 +153,6 @@ public:
     void on_destroy(void *);
     void on_ping_timeout(void *);
     void on_new_popup(wlr_xdg_popup *data);
-#if WLR_VERSION_MINOR <= 16
-    void on_map(void *);
-    void on_unmap(void *);
-#endif
     void on_configure(void *data);
     void on_ack_configure(void *data);
 
@@ -160,18 +178,6 @@ void QWXdgSurfacePrivate::on_new_popup(wlr_xdg_popup *data)
 {
     Q_EMIT q_func()->newPopup(QWXdgPopup::from(data));
 }
-
-#if WLR_VERSION_MINOR <= 16
-void QWXdgSurfacePrivate::on_map(void *)
-{
-    Q_EMIT q_func()->surface()->mapped();
-}
-
-void QWXdgSurfacePrivate::on_unmap(void *)
-{
-    Q_EMIT q_func()->surface()->unmapped();
-}
-#endif
 
 void QWXdgSurfacePrivate::on_configure(void *data)
 {
@@ -211,13 +217,7 @@ QWXdgSurface *QWXdgSurface::from(wl_resource *resource)
 
 QWXdgSurface *QWXdgSurface::from(wlr_surface *surface)
 {
-#if WLR_VERSION_MINOR > 16
     auto handle = wlr_xdg_surface_try_from_wlr_surface(surface);
-#else
-    if (!wlr_surface_is_xdg_surface(surface))
-        return nullptr;
-    auto handle = wlr_xdg_surface_from_wlr_surface(surface);
-#endif
     if (!handle)
         return nullptr;
 
@@ -308,6 +308,11 @@ public:
         : QWXdgSurfacePrivate(handle->base, isOwner, qq)
     {
         sc.connect(&handle->events.reposition, this, &QWXdgPopupPrivate::on_reposition);
+#if WLR_VERSION_MINOR >= 18
+        // wlr_xdg_popup.destory first then wlr_xdg_surface
+        // here connect QWXdgSurface::on_destroy, QWXdgSurface doesn't
+        sc.connect(&handle->events.destroy, this, &QWXdgPopupPrivate::on_destroy);
+#endif
     }
     ~QWXdgPopupPrivate () {
         if (!m_handle)
@@ -405,6 +410,11 @@ public:
         sc.connect(&handle->events.set_parent, this, &QWXdgToplevelPrivate::on_set_parent);
         sc.connect(&handle->events.set_title, this, &QWXdgToplevelPrivate::on_set_title);
         sc.connect(&handle->events.set_app_id, this, &QWXdgToplevelPrivate::on_set_app_id);
+#if WLR_VERSION_MINOR >= 18
+        // wlr_xdg_toplevel.destory first then wlr_xdg_surface
+        // here connect QWXdgSurface::on_destroy, QWXdgSurface doesn't
+        sc.connect(&handle->events.destroy, this, &QWXdgToplevelPrivate::on_destroy);
+#endif
     }
 
     void on_request_maximize(void *);

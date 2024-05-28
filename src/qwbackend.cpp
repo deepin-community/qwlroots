@@ -120,10 +120,10 @@ QWBackend *QWBackend::from(wlr_backend *handle)
 
 QWBackend *QWBackend::autoCreate(QWDisplay *display, QObject *parent)
 {
-#if WLR_VERSION_MINOR > 16
-    auto handle = wlr_backend_autocreate(display->handle(), nullptr);
+#if WLR_VERSION_MINOR >= 18
+    auto handle = wlr_backend_autocreate(display->eventLoop(), nullptr);
 #else
-    auto handle = wlr_backend_autocreate(display->handle());
+    auto handle = wlr_backend_autocreate(display->handle(), nullptr);
 #endif
     if (!handle)
         return nullptr;
@@ -148,14 +148,6 @@ QWBackend::~QWBackend()
 {
 
 }
-
-#if WLR_VERSION_MINOR <= 16
-clockid_t QWBackend::presentationClock() const
-{
-    Q_D(const QWBackend);
-    return wlr_backend_get_presentation_clock(handle());
-}
-#endif
 
 int QWBackend::drmFd() const
 {
@@ -188,6 +180,15 @@ QWMultiBackend *QWMultiBackend::from(wlr_backend *handle)
     return new QWMultiBackend(handle, false);
 }
 
+#if WLR_VERSION_MINOR > 17
+QWMultiBackend *QWMultiBackend::create(wl_event_loop *eventloop, QObject *parent)
+{
+    auto handle = wlr_multi_backend_create(eventloop);
+    if (!handle)
+        return nullptr;
+    return new QWMultiBackend(handle, true, parent);
+}
+#else
 QWMultiBackend *QWMultiBackend::create(QWDisplay *display, QObject *parent)
 {
     auto handle = wlr_multi_backend_create(display->handle());
@@ -195,6 +196,7 @@ QWMultiBackend *QWMultiBackend::create(QWDisplay *display, QObject *parent)
         return nullptr;
     return new QWMultiBackend(handle, true, parent);
 }
+#endif
 
 bool QWMultiBackend::add(QWBackend *backend)
 {
@@ -241,6 +243,16 @@ QWDrmBackend *QWDrmBackend::from(wlr_backend *handle)
     return new QWDrmBackend(handle, false);
 }
 
+#if WLR_VERSION_MINOR > 17
+// TODO: use QWSession and QWDevice
+QWDrmBackend *QWDrmBackend::create(wlr_session *session, wlr_device *dev, QWBackend *parent)
+{
+    auto handle = wlr_drm_backend_create(session, dev, parent->handle());
+    if (!handle)
+        return nullptr;
+    return new QWDrmBackend(handle, true, parent);
+}
+#else
 QWDrmBackend *QWDrmBackend::create(QWDisplay *display, wlr_session *session, wlr_device *dev, QWBackend *parent)
 {
     auto handle = wlr_drm_backend_create(display->handle(), session, dev, parent->handle());
@@ -248,6 +260,7 @@ QWDrmBackend *QWDrmBackend::create(QWDisplay *display, wlr_session *session, wlr
         return nullptr;
     return new QWDrmBackend(handle, true, parent);
 }
+#endif
 
 bool QWDrmBackend::isDrmOutput(QWOutput *output)
 {
@@ -309,18 +322,18 @@ QWWaylandBackend *QWWaylandBackend::from(wlr_backend *handle)
     return new QWWaylandBackend(handle, false);
 }
 
-#if WLR_VERSION_MINOR > 16
-QWWaylandBackend *QWWaylandBackend::create(QWDisplay *display, wl_display *remote_display, QObject *parent)
+#if WLR_VERSION_MINOR > 17
+QWWaylandBackend *QWWaylandBackend::create(wl_event_loop *eventloop, wl_display *remote_display, QObject *parent)
 {
-    auto handle = wlr_wl_backend_create(display->handle(), remote_display);
+    auto handle = wlr_wl_backend_create(eventloop, remote_display);
     if (!handle)
         return nullptr;
     return new QWWaylandBackend(handle, true, parent);
 }
 #else
-QWWaylandBackend *QWWaylandBackend::create(QWDisplay *display, const char *remote, QObject *parent)
+QWWaylandBackend *QWWaylandBackend::create(QWDisplay *display, wl_display *remote_display, QObject *parent)
 {
-    auto handle = wlr_wl_backend_create(display->handle(), remote);
+    auto handle = wlr_wl_backend_create(display->handle(), remote_display);
     if (!handle)
         return nullptr;
     return new QWWaylandBackend(handle, true, parent);
@@ -387,6 +400,15 @@ QWX11Backend *QWX11Backend::from(wlr_backend *handle)
     return new QWX11Backend(handle, false);
 }
 
+#if WLR_VERSION_MINOR > 17
+QWX11Backend *QWX11Backend::create(wl_event_loop *eventloop, const char *x11Display, QObject *parent)
+{
+    auto handle = wlr_x11_backend_create(eventloop, x11Display);
+    if (!handle)
+        return nullptr;
+    return new QWX11Backend(handle, true, parent);
+}
+#else
 QWX11Backend *QWX11Backend::create(QWDisplay *display, const char *x11Display, QObject *parent)
 {
     auto handle = wlr_x11_backend_create(display->handle(), x11Display);
@@ -394,6 +416,7 @@ QWX11Backend *QWX11Backend::create(QWDisplay *display, const char *x11Display, Q
         return nullptr;
     return new QWX11Backend(handle, true, parent);
 }
+#endif
 
 QWOutput *QWX11Backend::createOutput()
 {
@@ -445,6 +468,15 @@ QWLibinputBackend *QWLibinputBackend::from(wlr_backend *handle)
     return new QWLibinputBackend(handle, false);
 }
 
+#if WLR_VERSION_MINOR > 17
+QWLibinputBackend *QWLibinputBackend::create(wlr_session *session, QObject *parent)
+{
+    auto handle = wlr_libinput_backend_create(session);
+    if (!handle)
+        return nullptr;
+    return new QWLibinputBackend(handle, true, parent);
+}
+#else
 QWLibinputBackend *QWLibinputBackend::create(QWDisplay *display, wlr_session *session, QObject *parent)
 {
     auto handle = wlr_libinput_backend_create(display->handle(), session);
@@ -452,6 +484,7 @@ QWLibinputBackend *QWLibinputBackend::create(QWDisplay *display, wlr_session *se
         return nullptr;
     return new QWLibinputBackend(handle, true, parent);
 }
+#endif
 
 bool QWLibinputBackend::isLibinputDevice(QWInputDevice *device)
 {
@@ -488,6 +521,15 @@ QWHeadlessBackend *QWHeadlessBackend::from(wlr_backend *handle)
     return new QWHeadlessBackend(handle, false);
 }
 
+#if WLR_VERSION_MINOR > 17
+QWHeadlessBackend *QWHeadlessBackend::create(wl_event_loop *eventloop, QObject *parent)
+{
+    auto handle = wlr_headless_backend_create(eventloop);
+    if (!handle)
+        return nullptr;
+    return new QWHeadlessBackend(handle, true, parent);
+}
+#else
 QWHeadlessBackend *QWHeadlessBackend::create(QWDisplay *display, QObject *parent)
 {
     auto handle = wlr_headless_backend_create(display->handle());
@@ -495,6 +537,7 @@ QWHeadlessBackend *QWHeadlessBackend::create(QWDisplay *display, QObject *parent
         return nullptr;
     return new QWHeadlessBackend(handle, true, parent);
 }
+#endif
 
 QWOutput *QWHeadlessBackend::addOutput(unsigned int width, unsigned int height)
 {

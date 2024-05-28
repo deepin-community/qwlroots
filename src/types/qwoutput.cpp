@@ -39,9 +39,7 @@ public:
         sc.connect(&handle->events.present, this, &QWOutputPrivate::on_present);
         sc.connect(&handle->events.bind, this, &QWOutputPrivate::on_bind);
         sc.connect(&handle->events.description, this, &QWOutputPrivate::on_description);
-#if WLR_VERSION_MINOR > 16
         sc.connect(&handle->events.request_state, this, &QWOutputPrivate::on_request_state);
-#endif
         sc.connect(&handle->events.destroy, this, &QWOutputPrivate::on_destroy);
     }
     ~QWOutputPrivate() {
@@ -68,9 +66,7 @@ public:
     void on_present(void *data);
     void on_bind(void *data);
     void on_description(void *data);
-#if WLR_VERSION_MINOR > 16
     void on_request_state(void *data);
-#endif
     void on_destroy(void *data);
 
     static QHash<void*, QWOutput*> map;
@@ -119,12 +115,11 @@ void QWOutputPrivate::on_description(void *)
     Q_EMIT q_func()->descriptionChanged();
 }
 
-#if WLR_VERSION_MINOR > 16
 void QWOutputPrivate::on_request_state(void *data)
 {
     Q_EMIT q_func()->requestState(static_cast<wlr_output_event_request_state*>(data));
 }
-#endif
+
 void QWOutputPrivate::on_destroy(void *)
 {
     destroy();
@@ -159,12 +154,12 @@ QWOutput *QWOutput::from(wl_resource *resource)
     return from(handle);
 }
 
+#if WLR_VERSION_MAJOR == 0 && WLR_VERSION_MINOR < 18
 void QWOutput::enable(bool enable)
 {
     wlr_output_enable(handle(), enable);
 }
 
-#if WLR_VERSION_MAJOR == 0 && WLR_VERSION_MINOR < 18
 void QWOutput::createGlobal()
 {
     wlr_output_create_global(handle());
@@ -190,7 +185,7 @@ wlr_output_mode *QWOutput::preferredMode() const
 {
     return wlr_output_preferred_mode(handle());
 }
-
+#if WLR_VERSION_MINOR < 18
 void QWOutput::setMode(wlr_output_mode *mode)
 {
     wlr_output_set_mode(handle(), mode);
@@ -226,6 +221,17 @@ void QWOutput::setSubpixel(wl_output_subpixel_t subpixel)
     wlr_output_set_subpixel(handle(), static_cast<wl_output_subpixel>(subpixel));
 }
 
+void QWOutput::setDamage(pixman_region32 *damage)
+{
+    wlr_output_set_damage(handle(), damage);
+}
+
+void QWOutput::setGamma(size_t size, const uint16_t *r, const uint16_t *g, const uint16_t *b)
+{
+    wlr_output_set_gamma(handle(), size, r, g, b);
+}
+#endif
+
 void QWOutput::setName(const QByteArray &name)
 {
     wlr_output_set_name(handle(), name.constData());
@@ -255,31 +261,30 @@ QSize QWOutput::effectiveResolution() const
     return size;
 }
 
+#if WLR_VERSION_MINOR < 18
 bool QWOutput::attachRender(int *bufferAge)
 {
     return wlr_output_attach_render(handle(), bufferAge);
 }
+void QWOutput::attachBuffer(QWBuffer *buffer)
+{
+    wlr_output_attach_buffer(handle(), buffer->handle());
+}
+#endif
 
 void QWOutput::lockAttachRender(bool lock)
 {
     wlr_output_lock_attach_render(handle(), lock);
 }
 
-void QWOutput::attachBuffer(QWBuffer *buffer)
-{
-    wlr_output_attach_buffer(handle(), buffer->handle());
-}
-
+#if WLR_VERSION_MINOR < 18
 uint32_t QWOutput::preferredReadFormat() const
 {
     return wlr_output_preferred_read_format(handle());
 }
+#endif
 
-void QWOutput::setDamage(pixman_region32 *damage)
-{
-    wlr_output_set_damage(handle(), damage);
-}
-
+#if WLR_VERSION_MINOR < 18
 bool QWOutput::test()
 {
     return wlr_output_test(handle());
@@ -294,6 +299,7 @@ void QWOutput::rollback()
 {
     wlr_output_rollback(handle());
 }
+#endif
 
 bool QWOutput::testState(wlr_output_state *state)
 {
@@ -305,6 +311,11 @@ bool QWOutput::commitState(wlr_output_state *state)
     return wlr_output_commit_state(handle(), state);
 }
 
+void QWOutput::finishState(wlr_output_state *state)
+{
+    wlr_output_state_finish(state);
+}
+
 void QWOutput::scheduleFrame()
 {
     wlr_output_schedule_frame(handle());
@@ -313,11 +324,6 @@ void QWOutput::scheduleFrame()
 size_t QWOutput::getGammaSize() const
 {
     return wlr_output_get_gamma_size(handle());
-}
-
-void QWOutput::setGamma(size_t size, const uint16_t *r, const uint16_t *g, const uint16_t *b)
-{
-    wlr_output_set_gamma(handle(), size, r, g, b);
 }
 
 void QWOutput::lockSoftwareCursors(bool lock)
@@ -337,7 +343,6 @@ const wlr_drm_format_set *QWOutput::getPrimaryFormats(uint32_t bufferCaps)
     return wlr_output_get_primary_formats(handle(), bufferCaps);
 }
 
-#if WLR_VERSION_MINOR > 16
 void QWOutput::addSoftwareCursorsToRenderPass(wlr_render_pass *render_pass, const pixman_region32_t *damage)
 {
     wlr_output_add_software_cursors_to_render_pass(handle(), render_pass, damage);
@@ -347,7 +352,6 @@ bool QWOutput::configurePrimarySwapchain(const wlr_output_state *state, wlr_swap
 {
     return wlr_output_configure_primary_swapchain(handle(), state, swapchain);
 }
-#endif
 
 void QWOutputCursor::operator delete(QWOutputCursor *p, std::destroying_delete_t)
 {
@@ -369,15 +373,6 @@ QWOutputCursor *QWOutputCursor::create(QWOutput *output)
     auto handle = wlr_output_cursor_create(output->handle());
     return from(handle);
 }
-
-#if WLR_VERSION_MINOR <= 16
-bool QWOutputCursor::setImage(const QImage &image, const QPoint &hotspot)
-{
-    return wlr_output_cursor_set_image(handle(), reinterpret_cast<const uint8_t*>(image.constBits()),
-                                       image.bitPlaneCount(), image.width(), image.height(),
-                                       hotspot.x(), hotspot.y());
-}
-#endif
 
 bool QWOutputCursor::setBuffer(QWBuffer *buffer, const QPoint &hotspot)
 {
