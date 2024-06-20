@@ -6,7 +6,7 @@
 #include "qwoutput.h"
 #include "qwcompositor.h"
 #include "qwbackend.h"
-#include "util/qwsignalconnector.h"
+#include "private/qwglobal_p.h"
 
 #include <QHash>
 
@@ -16,48 +16,20 @@ extern "C" {
 
 QW_BEGIN_NAMESPACE
 
-class QWPresentationPrivate : public QWObjectPrivate
+class QWPresentationPrivate : public QWWrapObjectPrivate
 {
 public:
     QWPresentationPrivate(wlr_presentation *handle, bool isOwner, QWPresentation *qq)
-        : QWObjectPrivate(handle, isOwner, qq)
+        : QWWrapObjectPrivate(handle, isOwner, qq, &handle->events.destroy)
     {
-        Q_ASSERT(!map.contains(handle));
-        map.insert(handle, qq);
-        sc.connect(&handle->events.destroy, this, &QWPresentationPrivate::on_destroy);
-    }
-    ~QWPresentationPrivate() {
-        if (!m_handle)
-            return;
-        destroy();
+
     }
 
-    inline void destroy() {
-        Q_ASSERT(m_handle);
-        Q_ASSERT(map.contains(m_handle));
-        Q_EMIT q_func()->beforeDestroy(q_func());
-        map.remove(m_handle);
-        sc.invalidate();
-    }
-
-    void on_destroy(void *);
-
-    static QHash<void*, QWPresentation*> map;
     QW_DECLARE_PUBLIC(QWPresentation)
-    QWSignalConnector sc;
 };
-QHash<void*, QWPresentation*> QWPresentationPrivate::map;
-
-void QWPresentationPrivate::on_destroy(void *)
-{
-    destroy();
-    m_handle = nullptr;
-    delete q_func();
-}
 
 QWPresentation::QWPresentation(wlr_presentation *handle, bool isOwner)
-    : QObject(nullptr)
-    , QWObject(*new QWPresentationPrivate(handle, isOwner, this))
+    : QWWrapObject(*new QWPresentationPrivate(handle, isOwner, this))
 {
 
 }
@@ -72,7 +44,7 @@ QWPresentation *QWPresentation::create(QWDisplay *display, QWBackend *backend)
 
 QWPresentation *QWPresentation::get(wlr_presentation *handle)
 {
-    return QWPresentationPrivate::map.value(handle);
+    return static_cast<QWPresentation*>(QWPresentationPrivate::map.value(handle));
 }
 
 QWPresentation *QWPresentation::from(wlr_presentation *handle)

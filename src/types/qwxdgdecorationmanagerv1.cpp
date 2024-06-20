@@ -3,7 +3,7 @@
 
 #include "qwxdgdecorationmanagerv1.h"
 #include "qwdisplay.h"
-#include "util/qwsignalconnector.h"
+#include "private/qwglobal_p.h"
 
 #include <QHash>
 
@@ -20,45 +20,19 @@ QW_BEGIN_NAMESPACE
 
 /// QWXdgDecorationManagerV1
 
-class QWXdgDecorationManagerV1Private : public QWObjectPrivate
+class QWXdgDecorationManagerV1Private : public QWWrapObjectPrivate
 {
 public:
     QWXdgDecorationManagerV1Private(wlr_xdg_decoration_manager_v1 *handle, bool isOwner, QWXdgDecorationManagerV1 *qq)
-        : QWObjectPrivate(handle, isOwner, qq)
+        : QWWrapObjectPrivate(handle, isOwner, qq, &handle->events.destroy)
     {
-        Q_ASSERT(!map.contains(handle));
-        map.insert(handle, qq);
-        sc.connect(&handle->events.destroy, this, &QWXdgDecorationManagerV1Private::on_destroy);
         sc.connect(&handle->events.new_toplevel_decoration, this, &QWXdgDecorationManagerV1Private::on_new_toplevel_decoration);
     }
-    ~QWXdgDecorationManagerV1Private() {
-        if (!m_handle)
-            return;
-        destroy();
-    }
 
-    inline void destroy() {
-        Q_ASSERT(m_handle);
-        Q_ASSERT(map.contains(m_handle));
-        map.remove(m_handle);
-        sc.invalidate();
-    }
-
-    void on_destroy(void *);
     void on_new_toplevel_decoration(void *);
 
-    static QHash<void*, QWXdgDecorationManagerV1*> map;
     QW_DECLARE_PUBLIC(QWXdgDecorationManagerV1)
-    QWSignalConnector sc;
 };
-QHash<void*, QWXdgDecorationManagerV1*> QWXdgDecorationManagerV1Private::map;
-
-void QWXdgDecorationManagerV1Private::on_destroy(void *)
-{
-    destroy();
-    m_handle = nullptr;
-    delete q_func();
-}
 
 void QWXdgDecorationManagerV1Private::on_new_toplevel_decoration(void *data)
 {
@@ -67,15 +41,14 @@ void QWXdgDecorationManagerV1Private::on_new_toplevel_decoration(void *data)
 }
 
 QWXdgDecorationManagerV1::QWXdgDecorationManagerV1(wlr_xdg_decoration_manager_v1 *handle, bool isOwner)
-    : QObject(nullptr)
-    , QWObject(*new QWXdgDecorationManagerV1Private(handle, isOwner, this))
+    : QWWrapObject(*new QWXdgDecorationManagerV1Private(handle, isOwner, this))
 {
 
 }
 
 QWXdgDecorationManagerV1 *QWXdgDecorationManagerV1::get(wlr_xdg_decoration_manager_v1 *handle)
 {
-    return QWXdgDecorationManagerV1Private::map.value(handle);
+    return static_cast<QWXdgDecorationManagerV1*>(QWXdgDecorationManagerV1Private::map.value(handle));
 }
 
 QWXdgDecorationManagerV1 *QWXdgDecorationManagerV1::from(wlr_xdg_decoration_manager_v1 *handle)
@@ -95,45 +68,19 @@ QWXdgDecorationManagerV1 *QWXdgDecorationManagerV1::create(QWDisplay *display)
 
 /// QWXdgToplevelDecorationV1
 
-class QWXdgToplevelDecorationV1Private : public QWObjectPrivate
+class QWXdgToplevelDecorationV1Private : public QWWrapObjectPrivate
 {
 public:
     QWXdgToplevelDecorationV1Private(wlr_xdg_toplevel_decoration_v1 *handle, bool isOwner, QWXdgToplevelDecorationV1 *qq)
-        : QWObjectPrivate(handle, isOwner, qq)
+        : QWWrapObjectPrivate(handle, isOwner, qq, &handle->events.destroy)
     {
-        Q_ASSERT(!map.contains(handle));
-        map.insert(handle, qq);
-        sc.connect(&handle->events.destroy, this, &QWXdgToplevelDecorationV1Private::on_destroy);
         sc.connect(&handle->events.request_mode, this, &QWXdgToplevelDecorationV1Private::on_request_mode);
     }
-    ~QWXdgToplevelDecorationV1Private() {
-        if (!m_handle)
-            return;
-        destroy();
-    }
 
-    inline void destroy() {
-        Q_ASSERT(m_handle);
-        Q_ASSERT(map.contains(m_handle));
-        map.remove(m_handle);
-        sc.invalidate();
-    }
-
-    void on_destroy(void *);
     void on_request_mode(void *);
 
-    static QHash<void*, QWXdgToplevelDecorationV1*> map;
     QW_DECLARE_PUBLIC(QWXdgToplevelDecorationV1)
-    QWSignalConnector sc;
 };
-QHash<void*, QWXdgToplevelDecorationV1*> QWXdgToplevelDecorationV1Private::map;
-
-void QWXdgToplevelDecorationV1Private::on_destroy(void *)
-{
-    destroy();
-    m_handle = nullptr;
-    delete q_func();
-}
 
 void QWXdgToplevelDecorationV1Private::on_request_mode(void *)
 {
@@ -141,15 +88,14 @@ void QWXdgToplevelDecorationV1Private::on_request_mode(void *)
 }
 
 QWXdgToplevelDecorationV1::QWXdgToplevelDecorationV1(wlr_xdg_toplevel_decoration_v1 *handle, bool isOwner)
-    : QObject(nullptr)
-    , QWObject(*new QWXdgToplevelDecorationV1Private(handle, isOwner, this))
+    : QWWrapObject(*new QWXdgToplevelDecorationV1Private(handle, isOwner, this))
 {
 
 }
 
 QWXdgToplevelDecorationV1 *QWXdgToplevelDecorationV1::get(wlr_xdg_toplevel_decoration_v1 *handle)
 {
-    return QWXdgToplevelDecorationV1Private::map.value(handle);
+    return static_cast<QWXdgToplevelDecorationV1*>(QWXdgToplevelDecorationV1Private::map.value(handle));
 }
 
 QWXdgToplevelDecorationV1 *QWXdgToplevelDecorationV1::from(wlr_xdg_toplevel_decoration_v1 *handle)
