@@ -5,23 +5,18 @@
 
 #include "qwsignalconnector.h"
 #include "qwxdgforeignregistry.h"
+#include "private/qwglobal_p.h"
 
 #include <QHash>
 
 QW_BEGIN_NAMESPACE
 
-class QWXdgForeignExportedPrivate : public QWObjectPrivate
+class QWXdgForeignExportedPrivate : public QWWrapObjectPrivate
 {
 public:
     QWXdgForeignExportedPrivate(wlr_xdg_foreign_exported *handle, bool isOwner, QWXdgForeignExported *qq);
-    virtual ~QWXdgForeignExportedPrivate() override;
 
-    inline void destroy();
-    void on_destroy();
-
-    static QHash<void*, QWXdgForeignExported*> map;
     QW_DECLARE_PUBLIC(QWXdgForeignExported)
-    QWSignalConnector sc;
 };
 
 QW_END_NAMESPACE
