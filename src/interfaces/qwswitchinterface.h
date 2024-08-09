@@ -5,35 +5,13 @@
 
 #include <qwinterface.h>
 
-struct wlr_switch;
-struct wlr_switch_impl;
+extern "C" {
+#include <wlr/interfaces/wlr_switch.h>
+#include <wayland-server-core.h>
+}
 
 QW_BEGIN_NAMESPACE
 
-class QWSwitchInterface : public QWInterface {
-    friend class QWSwitch;
-public:
-    virtual ~QWSwitchInterface();
-    virtual const char* name() = 0;
-
-    inline wlr_switch *handle() const {
-        return QWInterface::handle<wlr_switch>();
-    }
-
-    inline wlr_switch_impl *impl() const {
-        return QWInterface::impl<wlr_switch_impl>();
-    }
-
-protected:
-    void notifyToggle() const;
-
-    template<class T>
-    inline void init(const char* name)
-    {
-        init(getFuncMagicKey<T>(), name);
-    }
-
-    virtual void init(FuncMagicKey funMagicKey, const char* name);
-};
+QW_CLASS_INTERFACE(switch)
 
 QW_END_NAMESPACE

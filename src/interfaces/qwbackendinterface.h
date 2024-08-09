@@ -5,36 +5,23 @@
 
 #include <qwinterface.h>
 
-struct wlr_backend;
-struct wlr_backend_impl;
+extern "C" {
+#include <wlr/backend.h>
+#include <wlr/backend/multi.h>
+#define static
+#include <wlr/backend/drm.h>
+#undef static
+#include <wlr/backend/wayland.h>
+#ifdef WLR_HAVE_X11_BACKEND
+#include <wlr/backend/x11.h>
+#endif
+#include <wlr/backend/libinput.h>
+#include <wlr/backend/headless.h>
+#include <wlr/backend/interface.h>
+}
 
 QW_BEGIN_NAMESPACE
 
-class QW_EXPORT QWBackendInterface : public QWInterface
-{
-    friend class QWBackend;
-public:
-    virtual ~QWBackendInterface();
-    virtual bool start() = 0;
-
-    virtual int getDrmFd() const;
-    virtual int getBufferCaps() const;
-
-    inline wlr_backend *handle() const {
-        return QWInterface::handle<wlr_backend>();
-    }
-    inline wlr_backend_impl *impl() const {
-        return QWInterface::impl<wlr_backend_impl>();
-    }
-    static QWBackendInterface *get(wlr_backend *handle);
-
-protected:
-    template<class T>
-    inline void init() {
-        init(getFuncMagicKey<T>(&T::getPresentationClock, &T::getDrmFd, &T::getBufferCaps));
-    }
-
-    virtual void init(FuncMagicKey funMagicKey);
-};
+QW_CLASS_INTERFACE(backend)
 
 QW_END_NAMESPACE
