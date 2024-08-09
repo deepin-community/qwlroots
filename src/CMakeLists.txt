@@ -7,22 +7,28 @@ add_compile_options(-Wall -Wextra -Werror=unused-variable -Werror=unused-paramet
 find_package(Qt${QT_VERSION_MAJOR}
     COMPONENTS
     Core
-    Gui
     REQUIRED
 )
 
+find_package(PkgConfig REQUIRED)
+
 if (USE_WLROOTS_GIT)
+    set(wlr wlroots-0.19)
+    set(WLROOTS_MINIMUM_REQUIRED 0.19.0)
+elseif (USE_WLROOTS_18)
     set(wlr wlroots-0.18)
     set(WLROOTS_MINIMUM_REQUIRED 0.18.0)
-else()
+else ()
     set(wlr wlroots)
     set(WLROOTS_MINIMUM_REQUIRED 0.17.0)
 endif()
 
-find_package(PkgConfig REQUIRED)
 pkg_search_module(WLROOTS REQUIRED IMPORTED_TARGET ${wlr}>=${WLROOTS_MINIMUM_REQUIRED})
 pkg_search_module(WAYLAND_SERVER REQUIRED IMPORTED_TARGET wayland-server)
 pkg_search_module(PIXMAN REQUIRED IMPORTED_TARGET pixman-1)
+pkg_search_module(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+pkg_search_module(WLR_PROTOCOLS wlr-protocols)
+pkg_search_module(XKBCOMMON REQUIRED IMPORTED_TARGET xkbcommon)
 
 pkg_get_variable(WLR_HAVE_DRM_BACKEND ${wlr} have_drm_backend)
 pkg_get_variable(WLR_HAVE_X11_BACKEND ${wlr} have_x11_backend)
@@ -38,117 +44,14 @@ configure_file(${PROJECT_SOURCE_DIR}/src/cmake/qwconfig.h.in generate/qwconfig.h
 
 message("wlroots version=${WLROOTS_VERSION}, major=${WLROOTS_VERSION_MAJOR}, minor=${WLROOTS_VERSION_MINOR}, patch=${WLROOTS_VERSION_PATCH}")
 
-pkg_search_module(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
 ws_generate(server wayland-protocols stable/xdg-shell/xdg-shell.xml xdg-shell-protocol)
 ws_generate(server wayland-protocols unstable/fullscreen-shell/fullscreen-shell-unstable-v1.xml fullscreen-shell-unstable-v1-protocol)
 ws_generate(server wayland-protocols unstable/tablet/tablet-unstable-v2.xml tablet-unstable-v2-protocol)
 ws_generate(server wayland-protocols unstable/pointer-constraints/pointer-constraints-unstable-v1.xml pointer-constraints-unstable-v1-protocol)
 
-set(SOURCES
-    qwglobal.cpp
-    qwbackend.cpp
-    qwdisplay.cpp
-    render/qwrenderer.cpp
-    render/qwtexture.cpp
-    render/qwallocator.cpp
-    render/qwegl.cpp
-    types/qwbuffer.cpp
-    types/qwclientbuffer.cpp
-    types/qwcompositor.cpp
-    types/qwexportdmabufmanagerv1.cpp
-    types/qwsubcompositor.cpp
-    types/qwdatadevice.cpp
-    types/qwdatasource.cpp
-    types/qwdrag.cpp
-    types/qwdatadevicev1.cpp
-    types/qwdatacontrolmanagerv1.cpp
-    types/qwdamagering.cpp
-    types/qwdrm.cpp
-    types/qwdrmleasev1.cpp
-    types/qwdrmleasev1manager.cpp
-    types/qwdrmleaserequestv1.cpp
-    types/qwoutputlayout.cpp
-    types/qwscene.cpp
-    types/qwseat.cpp
-    types/qwprimaryselection.cpp
-    types/qwswitch.cpp
-    types/qwxdgshell.cpp
-    types/qwcursor.cpp
-    types/qwxcursormanager.cpp
-    types/qwinputdevice.cpp
-    types/qwtouch.cpp
-    types/qwkeyboard.cpp
-    types/qwpointer.cpp
-    types/qwtablet.cpp
-    types/qwtablettool.cpp
-    types/qwtabletpad.cpp
-    types/qwoutput.cpp
-    types/qwxdgdecorationmanagerv1.cpp
-    types/qwidleinhibitv1.cpp
-    types/qwinputinhibitmanager.cpp
-    types/qwkeyboardgroup.cpp
-    types/qwpresentation.cpp
-    types/qwviewporter.cpp
-    types/qwxdgforeignregistry.cpp
-    types/qwxdgoutputv1.cpp
-    types/qwxdgactivationv1.cpp
-    types/qwxdgactivationtokenv1.cpp
-    types/qwtextinputv3.cpp
-    types/qwtextinputmanagerv3.cpp
-    types/qwtabletmanagerv2.cpp
-    types/qwsinglepixelbufferv1.cpp
-    types/qwsessionlockv1.cpp
-    types/qwsessionlockmanagerv1.cpp
-    types/qwsessionlocksurfacev1.cpp
-    types/qwscreencopyv1.cpp
-    types/qwrelativepointerv1.cpp
-    types/qwrelativepointermanagerv1.cpp
-    types/qwprimaryselectionv1.cpp
-    types/qwpointergesturesv1.cpp
-    types/qwpointerconstraintv1.cpp
-    types/qwpointerconstraintsv1.cpp
-    types/qwoutputmanagerv1.cpp
-    types/qwoutputconfigurationv1.cpp
-    types/qwoutputconfigurationheadv1.cpp
-    types/qwlinuxdmabufv1.cpp
-    types/qwlinuxdmabuffeedbackv1.cpp
-    types/qwinputmethodv2.cpp
-    types/qwinputmethodkeyboardgrabv2.cpp
-    types/qwinputpopupsurfacev2.cpp
-    types/qwinputmethodmanagerv2.cpp
-    types/qwidlenotifyv1.cpp
-    types/qwforeigntoplevelhandlev1.cpp
-    types/qwforeigntoplevelmanagerv1.cpp
-    types/qwxdgforeignv1.cpp
-    types/qwxdgforeignv2.cpp
-    types/qwvirtualkeyboardv1.cpp
-    types/qwvirtualkeyboardmanagerv1.cpp
-    types/qwvirtualpointerv1.cpp
-    types/qwgammacontorlv1.cpp
-    types/qwfullscreenshellv1.cpp
-    types/qwtabletv2.cpp
-    types/qwtabletv2tablet.cpp
-    types/qwtabletv2tabletool.cpp
-    types/qwtabletv2tablepad.cpp
-    types/qwtabletmanagerv2.cpp
-    types/qwkeyboardshortcutsinhibitv1.cpp
-    types/qwkeyboardshortcutsinhibitmanagerv1.cpp
-    types/qwfractionalscalemanagerv1.cpp
-    types/qwsecuritycontextmanagerv1.cpp
-    util/qwsignalconnector.cpp
-    util/qwlogging.cpp
-    interfaces/qwbackendinterface.cpp
-    interfaces/qwoutputinterface.cpp
-    interfaces/qwkeyboardinterface.cpp
-    interfaces/qwbufferinterface.cpp
-    interfaces/qwrendererinterface.cpp
-    interfaces/qwswitchinterface.cpp
-    interfaces/qwpointerinterface.cpp
-    interfaces/qwtabletpadinterface.cpp
-)
-
 set(HEADERS
     qwglobal.h
+    qwobject.h
     qwbackend.h
     qwdisplay.h
     render/qwrenderer.h
@@ -181,11 +84,9 @@ set(HEADERS
     types/qwoutput.h
     types/qwxdgdecorationmanagerv1.h
     types/qwidleinhibitv1.h
-    types/qwinputinhibitmanager.h
     types/qwkeyboardgroup.h
     types/qwpresentation.h
     types/qwxdgforeignregistry.h
-    types/qwxdgforeignregistry_p.h
     types/qwxdgforeignv1.h
     types/qwxdgforeignv2.h
     types/qwviewporter.h
@@ -212,8 +113,11 @@ set(HEADERS
     types/qwkeyboardshortcutsinhibitv1.h
     types/qwfractionalscalemanagerv1.h
     types/qwsecuritycontextmanagerv1.h
+    types/qwoutputlayer.h
+    types/qwtearingcontrolv1.h
     util/qwsignalconnector.h
     util/qwlogging.h
+    util/qwbox.h
     interfaces/qwinterface.h
     interfaces/qwbackendinterface.h
     interfaces/qwbufferinterface.h
@@ -224,12 +128,6 @@ set(HEADERS
     interfaces/qwswitchinterface.h
     interfaces/qwpointerinterface.h
     interfaces/qwtabletpadinterface.h
-)
-
-set(PRIVATE_HEADERS
-    types/qwinputdevice_p.h
-    types/qwkeyboard_p.h
-    private/qwglobal_p.h
 )
 
 ws_generate(
@@ -244,13 +142,19 @@ ws_generate(
     staging/cursor-shape/cursor-shape-v1.xml
     cursor-shape-v1-protocol
 )
-
-list(APPEND SOURCES
-    render/qwswapchain.cpp
-    types/qwshm.cpp
-    types/qwcontenttypev1.cpp
-    types/qwcursorshapev1.cpp
+ws_generate(
+    server
+    wayland-protocols
+    staging/tearing-control/tearing-control-v1.xml
+    tearing-control-v1-protocol
 )
+ws_generate(
+    server
+    wayland-protocols
+    stable/tablet/tablet-v2.xml
+    tablet-v2-protocol
+)
+
 list(APPEND HEADERS
     render/qwswapchain.h
     types/qwshm.h
@@ -258,32 +162,19 @@ list(APPEND HEADERS
     types/qwcursorshapev1.h
 )
 if(WLR_HAVE_XWAYLAND)
-    list(APPEND SOURCES
-        types/qwxwaylandshellv1.cpp
-    )
     list(APPEND HEADERS
         types/qwxwaylandshellv1.h
     )
 endif()
-if (${WLROOTS_VERSION_MINOR} GREATER_EQUAL 18)
-    list(REMOVE_ITEM HEADERS types/qwinputinhibitmanager.h)
-    list(REMOVE_ITEM SOURCES types/qwinputinhibitmanager.cpp)
-endif()
 
 if (WLR_HAVE_XWAYLAND)
-list(APPEND SOURCES
-    types/qwxwayland.cpp
-    types/qwxwaylandsurface.cpp
-    types/qwxwaylandserver.cpp
-)
-list(APPEND HEADERS
-    types/qwxwayland.h
-    types/qwxwaylandsurface.h
-    types/qwxwaylandserver.h
-)
+    list(APPEND HEADERS
+        types/qwxwayland.h
+        types/qwxwaylandsurface.h
+        types/qwxwaylandserver.h
+    )
 endif()
 
-pkg_search_module(WLR_PROTOCOLS wlr-protocols)
 if (WLR_PROTOCOLS_FOUND)
     ws_generate(server wlr-protocols unstable/wlr-layer-shell-unstable-v1.xml wlr-layer-shell-unstable-v1-protocol)
     ws_generate(server wlr-protocols unstable/wlr-output-power-management-unstable-v1.xml wlr-output-power-management-unstable-v1-protocol)
@@ -291,29 +182,18 @@ if (WLR_PROTOCOLS_FOUND)
         types/qwlayershellv1.h
         types/qwoutputpowermanagementv1.h
     )
-    set(PROTOCOL_SOURCES
-        types/qwlayershellv1.cpp
-        types/qwoutputpowermanagementv1.cpp
-    )
     list(APPEND HEADERS ${PROTOCOL_HEADERS})
     list(APPEND SOURCES ${PROTOCOL_SOURCES})
 endif ()
 
 add_library(${TARGET}
-    SHARED
+    STATIC
     ${SOURCES}
     ${HEADERS}
-    ${PRIVATE_HEADERS}
+    qwobject.cpp
+    qwbackend.cpp
 )
-
 add_library(QWlroots::QWlroots ALIAS ${TARGET})
-
-target_compile_definitions(${TARGET}
-PRIVATE
-    QW_LIBRARY
-    WLR_USE_UNSTABLE
-    QT_NO_SIGNALS_SLOTS_KEYWORDS
-)
 
 set_target_properties(${TARGET}
     PROPERTIES
@@ -321,26 +201,32 @@ set_target_properties(${TARGET}
         SOVERSION ${PROJECT_VERSION_MAJOR}
         PUBLIC_HEADER "${HEADERS}"
         EXPORT_NAME ${CMAKE_NAME}
+        POSITION_INDEPENDENT_CODE ON
 )
 
-set(QT_LIBRAIES
-    Qt${QT_VERSION_MAJOR}::Core
-    Qt${QT_VERSION_MAJOR}::Gui)
-
 target_link_libraries(${TARGET}
-    PRIVATE
-    ${QT_LIBRAIES}
+    PUBLIC
+    Qt${QT_VERSION_MAJOR}::Core
     PkgConfig::WLROOTS
     PkgConfig::WAYLAND_SERVER
     PkgConfig::PIXMAN
+    PkgConfig::XKBCOMMON
+)
+
+if (QWLROOTS_USE_PERCOMPILE_HEADERS)
+    target_precompile_headers(${TARGET}
+        PRIVATE
+        ${HEADERS}
+    )
+endif()
+
+target_compile_definitions(${TARGET}
+    PRIVATE
+    QT_NO_SIGNALS_SLOTS_KEYWORDS
+    QWLROOTS_LIBRARY
 )
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-target_include_directories(${TARGET}
-    PRIVATE
-    ${Qt${QT_VERSION_MAJOR}Gui_PRIVATE_INCLUDE_DIRS}
-)
 
 target_include_directories(${TARGET}
     PUBLIC
@@ -375,11 +261,16 @@ install(TARGETS ${TARGET}
 include(${PROJECT_SOURCE_DIR}/cmake/Helpers.cmake)
 add_cmake_module(${CMAKE_NAME} ${TARGET} ${CMAKE_INSTALL_FULL_INCLUDEDIR}/${TARGET})
 add_pkgconfig_module(${TARGET} ${TARGET} ${CMAKE_INSTALL_FULL_INCLUDEDIR}/${TARGET}
-    "wlroots = ${WLROOTS_VERSION}, Qt${QT_VERSION_MAJOR}Gui"
+    "${wlr} = ${WLROOTS_VERSION}, pixman-1, wayland-protocols, wlr-protocols, xkbcommon, Qt${QT_VERSION_MAJOR}Core"
 )
 
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_NAME}Config.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_NAME}
+)
+
+install(FILES
+    ${PROJECT_SOURCE_DIR}/cmake/WaylandScannerHelpers.cmake
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_NAME}
 )
 

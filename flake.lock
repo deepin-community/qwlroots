@@ -35,16 +35,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1716509168,
-        "narHash": "sha256-4zSIhSRRIoEBwjbPm3YiGtbd8HDWzFxJjw5DYSDy1n8=",
+        "lastModified": 1722410208,
+        "narHash": "sha256-5KNga0zuDNoM/1aanqfiKP/UOSeJN3YIgKiB6a4swqE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "bfb7a882678e518398ce9a31a881538679f6f092",
+        "rev": "2c9d7098712acf913c4d3f46f80ecbd7a38097f4",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
+        "ref": "nixos-unstable-small",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -53,8 +53,7 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "nix-filter": "nix-filter",
-        "nixpkgs": "nixpkgs",
-        "wlroots-master": "wlroots-master"
+        "nixpkgs": "nixpkgs"
       }
     },
     "systems": {
@@ -70,25 +69,6 @@
         "owner": "nix-systems",
         "repo": "default",
         "type": "github"
-      }
-    },
-    "wlroots-master": {
-      "flake": false,
-      "locked": {
-        "host": "gitlab.freedesktop.org",
-        "lastModified": 1716851300,
-        "narHash": "sha256-cnuBNBbXygiCeRjf3YT0ENx2pGu0knc6SAvk19bLj6A=",
-        "owner": "wlroots",
-        "repo": "wlroots",
-        "rev": "dc5996a8b45362a3add882f4510b535388b17e01",
-        "type": "gitlab"
-      },
-      "original": {
-        "host": "gitlab.freedesktop.org",
-        "owner": "wlroots",
-        "ref": "master",
-        "repo": "wlroots",
-        "type": "gitlab"
       }
     }
   },
